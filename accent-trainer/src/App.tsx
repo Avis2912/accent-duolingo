@@ -25,8 +25,12 @@ function App() {
   const chunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playbackRef = useRef<HTMLAudioElement | null>(null);
+  const currentSentenceRef = useRef<SentenceEntry>(sentenceList[0]);
 
   const currentSentence: SentenceEntry = sentenceList[currentIndex];
+  
+  // Keep ref in sync with current sentence (fixes stale closure issue)
+  currentSentenceRef.current = currentSentence;
 
   const startRecording = useCallback(async () => {
     try {
@@ -67,7 +71,8 @@ function App() {
     try {
       const formData = new FormData();
       formData.append('audio', blob, 'recording.webm');
-      formData.append('expected', JSON.stringify(currentSentence.phonemes));
+      // Use ref to get current sentence (avoids stale closure)
+      formData.append('expected', JSON.stringify(currentSentenceRef.current.phonemes));
       formData.append('model', model);
 
       const response = await fetch('/api/analyze', {
